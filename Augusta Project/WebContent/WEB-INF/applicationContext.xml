@@ -1,0 +1,102 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans     
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop.xsd">
+  
+  <!-- DEV C3PO-->
+ <bean id="serverDatasource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+    destroy-method="close">
+    <property name="driverClass" value="com.mysql.jdbc.Driver" />
+    <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/testdb" />
+    <property name="user" value="root" />
+    <property name="password" value="csci330pass" />
+    
+    <property name="initialPoolSize" value="3"></property>
+	<property name="minPoolSize" value="5"></property>
+	<property name="maxPoolSize" value="30"></property>
+	<property name="acquireIncrement" value="1"></property>
+	<property name="testConnectionOnCheckout" value="true"></property>
+	<property name="preferredTestQuery" value="SELECT * FROM testdb.test;"></property>
+  </bean>
+  
+<!-- DEV -->
+ <!-- <bean id="serverDatasource" class="org.apache.commons.dbcp.BasicDataSource"
+    destroy-method="close">
+    <property name="driverClassName" value="com.mysql.jdbc.Driver" />
+    <property name="url" value="jdbc:mysql://localhost:3306/testdb" />
+    <property name="username" value="root" />
+    <property name="password" value="csci330pass" />
+    <property name="validationQuery" value="SELECT 1"/>
+  	<property name="testOnBorrow" value="true"/>
+  	<property name="initialSize" value="3" />
+    <property name="maxActive" value="10" />
+    <property name="maxWait" value="5000" />
+  </bean> -->
+
+	<bean id="mySessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource" ref="serverDatasource"></property>
+		<property name="annotatedClasses">
+			<list>
+				<value>com.aug.model.Test</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<value>hibernate.dialect = org.hibernate.dialect.MySQLDialect</value>
+		</property>
+		<property name="SchemaUpdate"><value>true</value></property>	
+	</bean>
+
+
+<bean id = "testDaoImpl" class="com.aug.dao.impl.TestDAOImpl">
+    <property name="sessionFactory" ref="mySessionFactory"/>
+</bean>  
+
+
+<!-- ******** TRANSACTION MANAGEMENT USING AOP *************-->
+
+<bean id="myTransactionManager"
+class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+<property name="sessionFactory" ref="mySessionFactory"/>
+</bean>
+
+
+<aop:config>
+	<aop:pointcut id="allMethods" expression="execution(* com.test.dao.*.*(..))"/>
+	<aop:advisor advice-ref="txAdvice" pointcut-ref="allMethods"/>
+</aop:config>
+
+
+<tx:advice id="txAdvice" transaction-manager="myTransactionManager">
+<!-- <tx:attributes>
+	
+			
+	<tx:method	name="testMethod" 
+				propagation="REQUIRES_NEW" 
+				isolation="READ_COMMITTED"
+				rollback-for="Exception"/>
+				
+				
+				
+</tx:attributes> -->
+</tx:advice>
+		
+		
+		
+		
+		
+		
+ </beans>
